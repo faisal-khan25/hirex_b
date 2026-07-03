@@ -52,6 +52,11 @@ public class ApplicantDetailDto {
     private AtsBreakdownDto atsBreakdown;
     private String atsAnalysisStatus;    // NEW: null | "ANALYZED" | "NOT_ANALYZED"
 
+    // Manual hiring workflow
+    private boolean canHire;             // true only when status == INTERVIEW_PASSED
+    private String hiredAt;              // ISO date-time string, null if not hired
+    private String hiredBy;              // recruiter name/email who hired the candidate
+
     public ApplicantDetailDto() {}
 
     public Long getApplicationId() { return applicationId; }
@@ -126,4 +131,13 @@ public class ApplicantDetailDto {
 
     public String getAtsAnalysisStatus() { return atsAnalysisStatus; }
     public void setAtsAnalysisStatus(String atsAnalysisStatus) { this.atsAnalysisStatus = atsAnalysisStatus; }
+
+    public boolean isCanHire() { return canHire; }
+    public void setCanHire(boolean canHire) { this.canHire = canHire; }
+
+    public String getHiredAt() { return hiredAt; }
+    public void setHiredAt(String hiredAt) { this.hiredAt = hiredAt; }
+
+    public String getHiredBy() { return hiredBy; }
+    public void setHiredBy(String hiredBy) { this.hiredBy = hiredBy; }
 }

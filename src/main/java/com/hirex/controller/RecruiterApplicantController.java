@@ -87,6 +87,21 @@ public class RecruiterApplicantController {
         return ResponseEntity.ok(service.analyzeAts(applicationId, principal.getName()));
     }
 
+    /**
+     * POST /api/applications/{applicationId}/hire
+     *
+     * MANUAL HIRING — only reachable by the recruiter/manager who owns the
+     * job. Only valid once the candidate has successfully completed every
+     * prior stage (application status == INTERVIEW_PASSED). Rejected or
+     * not-yet-evaluated candidates are rejected with a 409/400 by the
+     * service layer (see GlobalExceptionHandler for mapping).
+     */
+    @PostMapping("/api/applications/{applicationId}/hire")
+    public ResponseEntity<ApplicantDetailDto> hire(@PathVariable Long applicationId,
+                                                   Principal principal) {
+        return ResponseEntity.ok(service.hireCandidate(applicationId, principal.getName()));
+    }
+
     public static class StatusUpdateRequest {
         private String status;
         public String getStatus() { return status; }

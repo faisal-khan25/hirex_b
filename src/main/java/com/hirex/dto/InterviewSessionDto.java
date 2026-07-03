@@ -26,6 +26,24 @@ public class InterviewSessionDto {
     private String interviewPassStatus;  // PASSED / UNDER_REVIEW / FAILED / PENDING
     private Double interviewScore;       // 0-100 overall rating
 
+    // ── Manual hiring workflow (used by the recruiter-facing report page) ──
+    private String applicationStatus;    // current ApplicationStatus name (e.g. INTERVIEW_PASSED, HIRED, REJECTED)
+    private boolean canHire;             // true only when applicationStatus == INTERVIEW_PASSED
+    private String hiredAt;              // ISO date-time string, null if not hired
+    private String hiredBy;              // recruiter name/email who hired the candidate
+
+    public String getApplicationStatus() { return applicationStatus; }
+    public void setApplicationStatus(String applicationStatus) { this.applicationStatus = applicationStatus; }
+
+    public boolean isCanHire() { return canHire; }
+    public void setCanHire(boolean canHire) { this.canHire = canHire; }
+
+    public String getHiredAt() { return hiredAt; }
+    public void setHiredAt(String hiredAt) { this.hiredAt = hiredAt; }
+
+    public String getHiredBy() { return hiredBy; }
+    public void setHiredBy(String hiredBy) { this.hiredBy = hiredBy; }
+
     public String getInterviewPassStatus() { return interviewPassStatus; }
     public void setInterviewPassStatus(String interviewPassStatus) {
         this.interviewPassStatus = interviewPassStatus;

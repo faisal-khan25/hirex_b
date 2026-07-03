@@ -364,7 +364,7 @@ public class AIInterviewService {
                 completeInterview(sessionId);
             } catch (Exception e) {
                 log.error("Session {}: auto-complete failed after final answer ({}). " +
-                        "Answer was saved; completion can be retried via /complete.",
+                                "Answer was saved; completion can be retried via /complete.",
                         sessionId, e.getMessage());
             }
         }
@@ -591,7 +591,7 @@ public class AIInterviewService {
 
     private InterviewSessionDto mapToDto(InterviewSession s) { return mapToDto(s, null); }
 
-//    private InterviewSessionDto mapToDto(InterviewSession s, List<InterviewQuestion> questions) {
+    //    private InterviewSessionDto mapToDto(InterviewSession s, List<InterviewQuestion> questions) {
 //        InterviewSessionDto dto = new InterviewSessionDto();
 //        dto.setId(s.getId());
 //        dto.setApplicationId(s.getApplication().getId());
@@ -613,50 +613,61 @@ public class AIInterviewService {
 //        return dto;
 //    }
 // REPLACE the existing private mapToDto() method with this version:
-private InterviewSessionDto mapToDto(InterviewSession s, List<InterviewQuestion> questions) {
-    InterviewSessionDto dto = new InterviewSessionDto();
-    dto.setId(s.getId());
-    dto.setApplicationId(s.getApplication().getId());
-    dto.setInterviewType(s.getInterviewType().toString());
-    dto.setStatus(s.getStatus().toString());
-    dto.setScheduledAt(s.getScheduledAt());
-    dto.setStartedAt(s.getStartedAt());
-    dto.setEndedAt(s.getEndedAt());
-    dto.setRecordingUrl(s.getRecordingUrl());
-    dto.setInterviewTemplate(s.getInterviewTemplate());
-    dto.setMaxDurationMinutes(s.getMaxDurationMinutes());
-    dto.setCandidateName(s.getCandidateName());
-    dto.setPositionTitle(s.getPositionTitle());
-    dto.setCreatedAt(s.getCreatedAt());
-    dto.setUpdatedAt(s.getUpdatedAt());
+    private InterviewSessionDto mapToDto(InterviewSession s, List<InterviewQuestion> questions) {
+        InterviewSessionDto dto = new InterviewSessionDto();
+        dto.setId(s.getId());
+        dto.setApplicationId(s.getApplication().getId());
+        dto.setInterviewType(s.getInterviewType().toString());
+        dto.setStatus(s.getStatus().toString());
+        dto.setScheduledAt(s.getScheduledAt());
+        dto.setStartedAt(s.getStartedAt());
+        dto.setEndedAt(s.getEndedAt());
+        dto.setRecordingUrl(s.getRecordingUrl());
+        dto.setInterviewTemplate(s.getInterviewTemplate());
+        dto.setMaxDurationMinutes(s.getMaxDurationMinutes());
+        dto.setCandidateName(s.getCandidateName());
+        dto.setPositionTitle(s.getPositionTitle());
+        dto.setCreatedAt(s.getCreatedAt());
+        dto.setUpdatedAt(s.getUpdatedAt());
 
-    if (questions != null) {
-        dto.setQuestions(questions.stream()
-                .map(this::mapQuestionToDto)
-                .collect(Collectors.toList()));
-    }
-
-    // ★ NEW: Populate evaluation + pass status for completed sessions
-    evaluationRepository.findBySessionId(s.getId()).ifPresent(eval -> {
-        dto.setInterviewPassStatus(eval.getInterviewPassStatus());
-        dto.setInterviewScore(eval.getOverallRating());
-        dto.setEvaluation(mapEvaluationToDto(eval));
-    });
-
-    // ★ NEW: If evaluation not yet saved, derive status from session status enum
-    if (dto.getInterviewPassStatus() == null) {
-        switch (s.getStatus()) {
-            case PASSED:       dto.setInterviewPassStatus("PASSED"); break;
-            case UNDER_REVIEW: dto.setInterviewPassStatus("UNDER_REVIEW"); break;
-            case FAILED:       dto.setInterviewPassStatus("FAILED"); break;
-            case COMPLETED:    dto.setInterviewPassStatus("COMPLETED"); break;
-            case IN_PROGRESS:  dto.setInterviewPassStatus("IN_PROGRESS"); break;
-            default:           dto.setInterviewPassStatus("SCHEDULED"); break;
+        if (questions != null) {
+            dto.setQuestions(questions.stream()
+                    .map(this::mapQuestionToDto)
+                    .collect(Collectors.toList()));
         }
-    }
 
-    return dto;
-}
+        // ★ NEW: Populate evaluation + pass status for completed sessions
+        evaluationRepository.findBySessionId(s.getId()).ifPresent(eval -> {
+            dto.setInterviewPassStatus(eval.getInterviewPassStatus());
+            dto.setInterviewScore(eval.getOverallRating());
+            dto.setEvaluation(mapEvaluationToDto(eval));
+        });
+
+        // ★ NEW: If evaluation not yet saved, derive status from session status enum
+        if (dto.getInterviewPassStatus() == null) {
+            switch (s.getStatus()) {
+                case PASSED:       dto.setInterviewPassStatus("PASSED"); break;
+                case UNDER_REVIEW: dto.setInterviewPassStatus("UNDER_REVIEW"); break;
+                case FAILED:       dto.setInterviewPassStatus("FAILED"); break;
+                case COMPLETED:    dto.setInterviewPassStatus("COMPLETED"); break;
+                case IN_PROGRESS:  dto.setInterviewPassStatus("IN_PROGRESS"); break;
+                default:           dto.setInterviewPassStatus("SCHEDULED"); break;
+            }
+        }
+
+        // ── Manual hiring workflow: expose the application's current status so
+        // the recruiter-facing report page can decide whether to show the Hire
+        // button, the Hired badge, or nothing at all.
+        Application application = s.getApplication();
+        if (application != null) {
+            dto.setApplicationStatus(application.getStatus() != null ? application.getStatus().name() : null);
+            dto.setCanHire(application.getStatus() == ApplicationStatus.INTERVIEW_PASSED);
+            dto.setHiredAt(application.getHiredAt() != null ? application.getHiredAt().toString() : null);
+            dto.setHiredBy(application.getHiredByName() != null ? application.getHiredByName() : application.getHiredBy());
+        }
+
+        return dto;
+    }
 
     private InterviewQuestionDto mapQuestionToDto(InterviewQuestion q) {
         InterviewQuestionDto dto = new InterviewQuestionDto();

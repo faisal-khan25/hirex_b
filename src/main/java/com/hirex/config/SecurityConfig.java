@@ -67,6 +67,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/jobs/*/shortlisted").hasRole("MANAGER")
                         .requestMatchers(HttpMethod.GET, "/api/jobs/*/applicants/**").hasRole("MANAGER")
                         .requestMatchers(HttpMethod.PATCH, "/api/applications/*/status").hasRole("MANAGER")
+                        // Manual hiring workflow: recruiter/manager and admin only
+                        .requestMatchers(HttpMethod.POST, "/api/applications/*/hire").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers("/api/interview/assign-all/**").hasRole("MANAGER")
                         .requestMatchers("/api/interview/assign/**").hasRole("MANAGER")
                         .requestMatchers("/api/chat/manager/**").hasRole("MANAGER")

@@ -193,6 +193,54 @@ public class RecruiterApplicantService {
         return toDetailDto(saved, job);
     }
 
+    /**
+     * POST /api/applications/{applicationId}/hire
+     *
+     * MANUAL HIRING WORKFLOW
+     *
+     * Hiring is NEVER automatic. A recruiter must explicitly confirm on the
+     * candidate's final evaluation page, after every prior stage — ATS
+     * screening -> Recruiter Conversation -> AI Interview -> Interview
+     * Evaluation — has completed successfully (application status is
+     * INTERVIEW_PASSED).
+     *
+     * Guards:
+     *  - Only the owning recruiter/manager (job owner) may hire.
+     *  - Rejected candidates can never be hired.
+     *  - Candidates whose interview is incomplete (not yet evaluated /
+     *    passed) can never be hired.
+     *  - Already-hired candidates cannot be hired again (idempotency guard —
+     *    the frontend also disables/hides the button after success).
+     */
+    public ApplicantDetailDto hireCandidate(Long applicationId, String managerEmail) {
+        Application app = appRepo.findById(applicationId)
+                .orElseThrow(() -> new java.util.NoSuchElementException("Application not found"));
+
+        assertOwnership(app, managerEmail);
+
+        if (app.getStatus() == ApplicationStatus.HIRED) {
+            throw new IllegalStateException("This candidate has already been hired.");
+        }
+        if (app.getStatus() == ApplicationStatus.REJECTED) {
+            throw new IllegalStateException("Rejected candidates cannot be hired.");
+        }
+        if (app.getStatus() != ApplicationStatus.INTERVIEW_PASSED) {
+            throw new IllegalStateException(
+                    "Candidate cannot be hired until ATS screening, recruiter conversation, " +
+                            "AI interview, and interview evaluation have all completed successfully.");
+        }
+
+        User recruiter = app.getJob().getCompany().getManager();
+
+        app.setStatus(ApplicationStatus.HIRED);
+        app.setHiredAt(LocalDateTime.now());
+        app.setHiredBy(managerEmail);
+        app.setHiredByName(recruiter != null ? recruiter.getName() : null);
+
+        Application saved = appRepo.save(app);
+        return toDetailDto(saved, saved.getJob());
+    }
+
     // ── Internal helpers ─────────────────────────────────────────────
 
     private void assertOwnership(Application app, String managerEmail) {
@@ -233,6 +281,13 @@ public class RecruiterApplicantService {
                 app.getStatus() == ApplicationStatus.SHORTLISTED
                         || app.getStatus() == ApplicationStatus.INTERVIEW_SCHEDULED
         );
+
+        // Manual hiring workflow: the Hire button/action is only valid once
+        // every prior stage (ATS -> Recruiter Conversation -> AI Interview ->
+        // Interview Evaluation) has completed successfully.
+        dto.setCanHire(app.getStatus() == ApplicationStatus.INTERVIEW_PASSED);
+        dto.setHiredAt(app.getHiredAt() != null ? app.getHiredAt().toString() : null);
+        dto.setHiredBy(app.getHiredByName() != null ? app.getHiredByName() : app.getHiredBy());
 
         // FIX: this was previously never populated anywhere, so the frontend
         // had no way to link to /manager/interview/{sessionId}/report — the

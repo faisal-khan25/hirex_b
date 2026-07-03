@@ -9,14 +9,14 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(
-    name = "applications",
-    indexes = {
-        @Index(name = "idx_app_applicant_id", columnList = "applicant_id"),
-        @Index(name = "idx_app_job_id",       columnList = "job_id"),
-        @Index(name = "idx_app_status",        columnList = "status"),
-        // Compound index for manager's shortlisted-applications query
-        @Index(name = "idx_app_job_status",    columnList = "job_id, status")
-    }
+        name = "applications",
+        indexes = {
+                @Index(name = "idx_app_applicant_id", columnList = "applicant_id"),
+                @Index(name = "idx_app_job_id",       columnList = "job_id"),
+                @Index(name = "idx_app_status",        columnList = "status"),
+                // Compound index for manager's shortlisted-applications query
+                @Index(name = "idx_app_job_status",    columnList = "job_id, status")
+        }
 )
 public class Application {
 
@@ -54,6 +54,22 @@ public class Application {
     private String shortlistReason;
 
     private LocalDateTime atsCheckedAt;
+
+    // ── Manual hiring workflow ──────────────────────────────────────────
+    // Set only when a recruiter explicitly clicks "Hire" on the candidate's
+    // final evaluation page (after ATS -> Recruiter Conversation -> AI
+    // Interview -> Interview Evaluation have all completed successfully).
+    // Hiring is NEVER automatic.
+    @Column(name = "hired_at")
+    private LocalDateTime hiredAt;
+
+    // Email of the recruiter/manager who performed the hire action.
+    @Column(name = "hired_by")
+    private String hiredBy;
+
+    // Display name of the recruiter/manager who performed the hire action.
+    @Column(name = "hired_by_name")
+    private String hiredByName;
 
     @PrePersist
     public void prePersist() {
@@ -100,4 +116,13 @@ public class Application {
 
     public LocalDateTime getAtsCheckedAt() { return atsCheckedAt; }
     public void setAtsCheckedAt(LocalDateTime atsCheckedAt) { this.atsCheckedAt = atsCheckedAt; }
+
+    public LocalDateTime getHiredAt() { return hiredAt; }
+    public void setHiredAt(LocalDateTime hiredAt) { this.hiredAt = hiredAt; }
+
+    public String getHiredBy() { return hiredBy; }
+    public void setHiredBy(String hiredBy) { this.hiredBy = hiredBy; }
+
+    public String getHiredByName() { return hiredByName; }
+    public void setHiredByName(String hiredByName) { this.hiredByName = hiredByName; }
 }
