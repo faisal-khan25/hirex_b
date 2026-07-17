@@ -34,7 +34,7 @@ public class DataSeeder implements CommandLineRunner {
     private final UserRepository userRepo;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${app.admin.default-email:admin@hirex.com}")
+    @Value("${app.admin.default-email:Admin@gmail.com}")
     private String adminEmail;
 
     @Value("${app.admin.default-password:}")
